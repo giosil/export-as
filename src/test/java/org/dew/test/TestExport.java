@@ -35,8 +35,9 @@ public class TestExport extends TestCase {
     
     byte[] xlsx = ExportAs.xlsx(data, "test");
     
-    saveContent(xlsx, getDesktopPath("test.xlsx"));
+    List<List<Object>> records = ExportAs.data(xlsx);
     
+    System.out.println(records);
   }
   
   public static

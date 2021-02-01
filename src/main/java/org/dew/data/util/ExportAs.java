@@ -2,10 +2,12 @@ package org.dew.data.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -13,8 +15,6 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
 
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
-import com.itextpdf.tool.xml.XMLWorkerHelper;
 
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
@@ -311,7 +311,7 @@ class ExportAs
       com.itextpdf.text.pdf.PdfWriter writer = com.itextpdf.text.pdf.PdfWriter.getInstance(pdfDocument, result);
       pdfDocument.open();
       
-      XMLWorkerHelper.getInstance().parseXHtml(writer, pdfDocument, new ByteArrayInputStream(htmlContent));
+      com.itextpdf.tool.xml.XMLWorkerHelper.getInstance().parseXHtml(writer, pdfDocument, new ByteArrayInputStream(htmlContent));
     }
     catch(Exception ex) {
       System.err.println("ExportAs.pdf: " + ex);
@@ -321,6 +321,70 @@ class ExportAs
     }
     
     return result.toByteArray();
+  }
+  
+  public static
+  List<List<Object>> data(byte[] xlsx)
+  {
+    List<List<Object>> listResult = new ArrayList<List<Object>>();
+    
+    if(xlsx == null || xlsx.length < 3) {
+      return listResult;
+    }
+    
+    Workbook workbook = null;
+    try {
+      workbook = new XSSFWorkbook(new ByteArrayInputStream(xlsx));
+      
+      Sheet sheet0 = workbook.getSheetAt(0);
+      
+      Iterator<Row> rowIterator = sheet0.iterator();
+      
+      while(rowIterator.hasNext()) {
+        Row row = rowIterator.next();
+        
+        List<Object> record = new ArrayList<Object>();
+        listResult.add(record);
+        
+        Iterator<Cell> cellIterator = row.iterator();
+        while(cellIterator.hasNext()) {
+          Cell cell = cellIterator.next();
+          
+          switch (cell.getCellType()) {
+          case BLANK:
+            record.add("");
+            break;
+          case BOOLEAN:
+            record.add(cell.getBooleanCellValue());
+            break;
+          case NUMERIC:
+            CellStyle cellStyle = cell.getCellStyle();
+            if(cellStyle != null) {
+              String dataFormat = cellStyle.getDataFormatString();
+              if(dataFormat != null && dataFormat.length() > 0) {
+                if(dataFormat.indexOf('/') > 0 || dataFormat.indexOf('-') > 0) {
+                  record.add(cell.getDateCellValue());
+                  continue;
+                }
+              }
+            }
+            record.add(cell.getNumericCellValue());
+            break;
+          default:
+            record.add(cell.getStringCellValue());
+            break;
+          }
+        }
+      }
+    }
+    catch(Exception ex) {
+      System.err.println("ExportAs.data: " + ex);
+    }
+    finally {
+      if(workbook != null) try { workbook.close(); } catch(Exception ex) {}
+    }
+    
+    return listResult;
   }
   
   public static
