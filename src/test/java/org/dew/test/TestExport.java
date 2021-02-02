@@ -35,9 +35,9 @@ public class TestExport extends TestCase {
     
     byte[] xlsx = ExportAs.xlsx(data, "test");
     
-    List<List<Object>> records = ExportAs.data(xlsx);
+    List<List<Object>> result = ExportAs.data(xlsx);
     
-    System.out.println(records);
+    print(result);
   }
   
   public static
@@ -64,6 +64,24 @@ public class TestExport extends TestCase {
     }
     
     return listResult;
+  }
+  
+  public static
+  void print(List<List<Object>> list)
+  {
+    if(list == null) {
+      System.out.println("null");
+      return;
+    }
+    
+    if(list.size() == 0) {
+      System.out.println("[]");
+      return;
+    }
+    
+    for(int i = 0; i < list.size(); i++) {
+      System.out.println("[" + i + "] " + list.get(i));
+    }
   }
   
   public static

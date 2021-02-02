@@ -16,6 +16,8 @@ byte[] csv  = ExportAs.csv(data,  "test");
 byte[] html = ExportAs.html(data, "test");
 
 byte[] pdf  = ExportAs.pdf(data,  "test");
+
+byte[] json = ExportAs.json(data, "test");
 ```
 
 ## Build
