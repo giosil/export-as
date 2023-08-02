@@ -2,6 +2,8 @@ package org.dew.data.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -19,6 +21,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
@@ -345,6 +348,104 @@ class ExportAs
     
     return listResult;
   }
+  
+  public static 
+  List<List<Object>> xlsxData(String filePath)
+    throws Exception
+  {
+    return xlsxData(filePath, null);
+  }
+  
+  public static 
+  List<List<Object>> xlsxData(File file)
+    throws Exception
+  {
+    return xlsxData(file, null);
+  }
+  
+  public static 
+  List<List<Object>> xlsxData(String filePath, int[] dateColumns)
+    throws Exception
+  {
+    if(filePath == null || filePath.length() == 0) return null;
+    
+    return xlsxData(new File(filePath), dateColumns);
+  }
+  
+  public static 
+  List<List<Object>> xlsxData(File file, int[] dateColumns)
+    throws Exception
+  {
+    if(file == null || !file.exists()) return null;
+    
+    List<List<Object>> result = new ArrayList<List<Object>>();
+    
+    int row = 0;
+    int col = 0;
+    FileInputStream fis = null;
+    Workbook workbook = null;
+    try {
+      fis = new FileInputStream(file);
+      
+      workbook = new XSSFWorkbook(fis);
+      
+      Sheet sheet = workbook.getSheetAt(0);
+      
+      Iterator<Row> rowIterator = sheet.iterator();
+      
+      while(rowIterator.hasNext()) {
+        Row sheetRow = rowIterator.next();
+        
+        row++;
+        // Header
+        if(row == 1) continue;
+        
+        col = 0;
+        List<Object> record = new ArrayList<Object>();
+        
+        Iterator<Cell> cellIterator = sheetRow.cellIterator();
+        while(cellIterator.hasNext()) {
+          Cell cell = cellIterator.next();
+          col++;
+          
+          boolean isDate = false;
+          if(dateColumns != null && dateColumns.length > 0) {
+            for(int i = 0; i < dateColumns.length; i++) {
+              if(dateColumns[i] == col) {
+                isDate = true;
+                break;
+              }
+            }
+          }
+          
+          CellType cellType = cell.getCellType();
+          switch(cellType) {
+            case NUMERIC:
+              if(isDate) {
+                record.add(cell.getDateCellValue());
+              }
+              else {
+                record.add(cell.getNumericCellValue());
+              }
+              break;
+            case STRING:
+              record.add(cell.getStringCellValue());
+              break;
+            default:
+              break;
+          }
+        }
+        
+        result.add(record);
+      }
+    }
+    finally {
+      if(workbook != null) try { workbook.close(); } catch(Exception ex) {}
+      if(fis != null) try { fis.close(); } catch(Exception ex) {}
+    }
+    return result;
+  }
+ 
   
   public static
   String getContentType(Object fileName)
